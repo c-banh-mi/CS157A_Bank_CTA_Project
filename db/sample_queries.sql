@@ -33,7 +33,7 @@ GROUP BY customer_id;
 
 -- Insert a new fund transfer
 INSERT INTO TRANSACTION_RECORD (source_account_id, destination_account_id, amount, transaction_type, transaction_date)
-VALUES (1, 2, 250.00, 'Deposit', NOW());
+VALUES (1, 2, 250.00, 'Transfer', NOW());
 
 -- Total balance for each customer
 SELECT 
