@@ -21,7 +21,7 @@ import java.sql.Statement;
  * List<Map<String,Object>> rows = DBConnector.executeQuery("SELECT * FROM accounts WHERE id = ?", 1);
  */
 public final class DBConnector {
-    private static final String URL = "jdbc:mysql://localhost:3306/bank?serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/BankCTA_DB?serverTimezone=UTC";
     private static final String USER = "root";
     private static final String PASSWORD = "-ango451236ANGO";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
