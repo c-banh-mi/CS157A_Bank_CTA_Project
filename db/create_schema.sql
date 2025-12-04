@@ -12,7 +12,9 @@ CREATE TABLE CUSTOMER (
     email VARCHAR(100) NOT NULL UNIQUE, -- unique
     phone_number VARCHAR(15) NOT NULL,
     dob DATE NOT NULL,
-    address VARCHAR(255) NOT NULL
+    address VARCHAR(255) NOT NULL,
+    income DECIMAL(10, 2) DEFAULT 0.00,
+    credit_score INT DEFAULT 0
 );
 
 -- ACCOUNT Table (Child of CUSTOMER)

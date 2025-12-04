@@ -7,34 +7,20 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Simple DB connector utility.
- *
- * Configuration via system properties or environment variables:
- * - DB_URL (default: jdbc:mysql:bank.db)
- * - DB_USER
- * - DB_PASSWORD
- * - DB_DRIVER (optional: e.g. com.mysql.cj.jdbc.Driver)
- *
- * Usage:
- * Connection c = DBConnector.getConnection();
- * List<Map<String,Object>> rows = DBConnector.executeQuery("SELECT * FROM accounts WHERE id = ?", 1);
- */
 public final class DBConnector {
-    private static final String URL = "jdbc:mysql://localhost:3306/?serverTimezone=UTC";
+    private static final String CONNECTION_URL = "jdbc:mysql://localhost:3306/BankCTA_DB?serverTimezone=UTC";
     private static final String USER = "root";
     private static final String PASSWORD = "wu9r*6rEDAJ8";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
+    private static final String BASE_URL = "jdbc:mysql://localhost:3306/?serverTimezone=UTC";
 
-
-    private DBConnector() { /* utility */ }
+    private DBConnector() {}
 
     static {
         if (!DRIVER.isEmpty()) {
             try {
                 Class.forName(DRIVER);
             } catch (ClassNotFoundException e) {
-                // Driver not found; applications may still work if JDBC auto-loading is available.
                 e.printStackTrace();
             }
         }
@@ -46,21 +32,26 @@ public final class DBConnector {
         return (v == null || v.isEmpty()) ? defaultValue : v;
     }
 
-    /**
-     * Obtain a new connection. Caller is responsible for closing it.
-     */
     public static Connection getConnection() throws SQLException {
         if (USER.isEmpty() && PASSWORD.isEmpty()) {
-            return DriverManager.getConnection(URL);
+            return DriverManager.getConnection(CONNECTION_URL);
         } else {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
+            return DriverManager.getConnection(CONNECTION_URL, USER, PASSWORD);
+        }
+    }
+    
+    private static Connection getBaseConnection() throws SQLException {
+        if (USER.isEmpty() && PASSWORD.isEmpty()) {
+            return DriverManager.getConnection(BASE_URL);
+        } else {
+            return DriverManager.getConnection(BASE_URL, USER, PASSWORD);
         }
     }
 
-    /**
-     * Execute a parameterized SELECT and return rows as a list of maps (column label -> value).
-     * Resources are closed automatically.
-     */
+    public static List<Map<String, Object>> executeQuery(String sql) throws SQLException {
+        return executeQuery(sql, new Object[0]);
+    }
+
     public static List<Map<String, Object>> executeQuery(String sql, Object... params) throws SQLException {
         List<Map<String, Object>> results = new ArrayList<>();
         try (Connection conn = getConnection();
@@ -84,9 +75,6 @@ public final class DBConnector {
         return results;
     }
 
-    /**
-     * Execute an INSERT/UPDATE/DELETE. Returns affected row count.
-     */
     public static int executeUpdate(String sql, Object... params) throws SQLException {
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -102,9 +90,6 @@ public final class DBConnector {
         }
     }
 
-    /**
-     * Close resources quietly (ignores exceptions).
-     */
     public static void closeQuietly(AutoCloseable... resources) {
         if (resources == null) return;
         for (AutoCloseable r : resources) {
@@ -118,20 +103,19 @@ public final class DBConnector {
 
     public static void executeSQLFile(String filePath) {
         try (Connection conn = getConnection();
-            Statement stmt = conn.createStatement();
-            BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+             Statement stmt = conn.createStatement();
+             BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 
             StringBuilder sql = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue; // skip blank lines
+                if (line.isEmpty()) continue;
 
-                // Remove inline comments starting with --
                 int commentIndex = line.indexOf("--");
                 if (commentIndex != -1) {
                     line = line.substring(0, commentIndex).trim();
-                    if (line.isEmpty()) continue; // skip line if nothing left
+                    if (line.isEmpty()) continue;
                 }
 
                 sql.append(line).append(" ");
@@ -139,11 +123,10 @@ public final class DBConnector {
                     String sqlToExecute = sql.toString().trim();
                     System.out.println("Executing SQL: " + sqlToExecute);
                     stmt.execute(sqlToExecute);
-                    sql.setLength(0); // reset for next statement
+                    sql.setLength(0);
                 }
             }
 
-            // Execute any remaining SQL not terminated with ;
             if (sql.length() > 0) {
                 String sqlToExecute = sql.toString().trim();
                 System.out.println("Executing SQL: " + sqlToExecute);
@@ -157,28 +140,31 @@ public final class DBConnector {
     }
 
     public static void main(String[] args) {
-        try (Connection conn = getConnection();
-            Statement stmt = conn.createStatement()) {
+        
+        try (Connection baseConn = getBaseConnection();
+             Statement stmt = baseConn.createStatement()) {
 
-            // Create the database if it doesn't exist
-            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS bank");
-            System.out.println("Database created or already exists.");
+            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS BankCTA_DB"); 
+            System.out.println("Database BankCTA_DB created or already exists.");
+            
+        } catch (SQLException e) {
+            System.err.println("Error during database creation.");
+            e.printStackTrace();
+        }
+        
+        try {
+            executeSQLFile("db/create_schema.sql"); 
+            executeSQLFile("db/initialize_data.sql");
+            executeSQLFile("db/sample_queries.sql");
 
-            // Optional: switch to the 'bank' database
-            stmt.execute("USE BankCTA_DB");
-
-            // Execute SQL files
-            executeSQLFile("db/create_schema.sql");       // Create tables
-            executeSQLFile("db/initialize_data.sql");    // Insert data
-            executeSQLFile("db/sample_queries.sql");     // Optional queries
-
-            // Test query
             List<Map<String, Object>> rows = executeQuery("SELECT * FROM ACCOUNT WHERE customer_id = 1");
+            System.out.println("Test Query Result (Customer ID 1 Accounts):");
             for (Map<String, Object> row : rows) {
                 System.out.println(row);
             }
 
         } catch (SQLException e) {
+            System.err.println("Error during initial database setup. Could not create or populate schema.");
             e.printStackTrace();
         }
     }
