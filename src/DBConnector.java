@@ -23,7 +23,7 @@ import java.sql.Statement;
 public final class DBConnector {
     private static final String URL = "jdbc:mysql://localhost:3306/BankCTA_DB?serverTimezone=UTC";
     private static final String USER = "root";
-    private static final String PASSWORD = "-ango451236ANGO";
+    private static final String PASSWORD = "wu9r*6rEDAJ8";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
 
 
