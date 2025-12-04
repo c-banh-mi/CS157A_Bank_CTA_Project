@@ -4,13 +4,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-// Import your business logic classes
-import your_package.AccountDAO;
-import your_package.CustomerDAO;
-import your_package.TransactionService;
-import your_package.LoanDAO;
-import java.sql.SQLException;
-
 public class BankControllerServlet extends HttpServlet {
 
     private AccountDAO accountDAO;
@@ -47,13 +40,11 @@ public class BankControllerServlet extends HttpServlet {
             switch (action) {
                 
                 case "viewAccounts":
-                    // Retrieve all accounts from DAO and set as attribute for JSP
                     request.setAttribute("accountsList", accountDAO.getAllAccounts());
                     request.getRequestDispatcher("/viewAccounts.jsp").forward(request, response);
                     break;
 
                 case "addCustomer":
-                    // Logic to process customer form submission
                     String firstName = request.getParameter("firstName");
                     String lastName = request.getParameter("lastName");
                     String email = request.getParameter("email");
@@ -68,7 +59,6 @@ public class BankControllerServlet extends HttpServlet {
                     break;
 
                 case "processTransfer":
-                    // --- TRANSACTIONAL LOGIC INTEGRATION (CRITICAL) ---
                     int sourceId = Integer.parseInt(request.getParameter("sourceId"));
                     int destId = Integer.parseInt(request.getParameter("destId"));
                     double amount = Double.parseDouble(request.getParameter("amount"));
@@ -82,7 +72,6 @@ public class BankControllerServlet extends HttpServlet {
                     break;
                 
                 case "updateLoanStatus":
-                    // Logic to process loan status update form
                     int loanId = Integer.parseInt(request.getParameter("loanId"));
                     String newStatus = request.getParameter("newStatus");
                     
@@ -98,10 +87,6 @@ public class BankControllerServlet extends HttpServlet {
             }
         } catch (NumberFormatException e) {
             request.setAttribute("message", "Error: Invalid ID or Amount format. Please use numbers only.");
-            request.getRequestDispatcher("/result.jsp").forward(request, response);
-        } catch (SQLException e) {
-            // Catch SQL exceptions that weren't caught in the DAO/Service layers
-            request.setAttribute("message", "Database Error: " + e.getMessage());
             request.getRequestDispatcher("/result.jsp").forward(request, response);
         }
     }
