@@ -1,15 +1,32 @@
-<%@ taglib uri="jakarta.tags.core" prefix="c" %> <jsp:include page="header.jsp"/>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %> <%@ taglib uri="jakarta.tags.core" prefix="c" %> <jsp:include page="header.jsp"/>
+
+<!-- Error Alert (If transfer fails) -->
+<c:if test="${not empty errorMessage}">
+    <div class="alert alert-danger alert-dismissible fade show">
+        ${errorMessage}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</c:if>
 
 <div class="row">
-    <!-- Sidebar: Accounts List -->
+    <!-- Sidebar: Accounts List with Sort Only -->
     <div class="col-md-4">
         <div class="card shadow-sm h-100">
             <div class="card-header bg-dark text-white">
-                <i class="fas fa-wallet me-2"></i> Accounts & Balances
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fas fa-wallet me-2"></i> Accounts</span>
+                </div>
+                
+                <!-- Sort Buttons -->
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="sortList('id')">Sort ID</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="sortList('bal')">Sort Bal</button>
+                </div>
             </div>
-            <ul class="list-group list-group-flush overflow-auto" style="max-height: 500px;">
+            
+            <ul class="list-group list-group-flush overflow-auto" id="accountList" style="max-height: 500px;">
                 <c:forEach var="acc" items="${accountsList}">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <li class="list-group-item d-flex justify-content-between align-items-center account-item">
                         <span class="small">${acc}</span>
                     </li>
                 </c:forEach>
@@ -50,7 +67,7 @@
     </div>
 </div>
 
-<!-- Success Modal Popup -->
+<!-- Success Modal -->
 <c:if test="${not empty transferSuccess}">
 <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -62,27 +79,6 @@
       <div class="modal-body text-center">
         <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
         <h5>Transaction Complete</h5>
-        <hr>
-        <div class="d-flex justify-content-around align-items-center">
-            <div>
-                <h6>Source Account</h6>
-                <span class="text-muted text-decoration-line-through">Old Balance</span>
-                <br>
-                <i class="fas fa-arrow-down text-danger"></i>
-                <br>
-                <span class="fw-bold">New Balance</span>
-            </div>
-            <i class="fas fa-chevron-right fa-2x text-muted"></i>
-            <div>
-                <h6>Dest Account</h6>
-                <span class="text-muted text-decoration-line-through">Old Balance</span>
-                <br>
-                <i class="fas fa-arrow-up text-success"></i>
-                <br>
-                <span class="fw-bold">New Balance</span>
-            </div>
-        </div>
-        <p class="text-muted mt-3 small">Updates have been committed to the database.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -91,11 +87,50 @@
   </div>
 </div>
 <script>
-    // Auto-trigger modal on page load
     window.onload = function() {
         var myModal = new bootstrap.Modal(document.getElementById('successModal'));
         myModal.show();
     };
 </script>
 </c:if>
+
+<!-- Client-Side Scripts for Sort -->
+<script>
+    // State to track sort direction (asc by default)
+    let sortDir = { id: 'asc', bal: 'asc' };
+
+    // Sort Logic
+    function sortList(type) {
+        let list = document.getElementById('accountList');
+        let items = Array.from(list.getElementsByTagName('li'));
+        
+        // Toggle direction
+        let currentDir = sortDir[type];
+        let multiplier = (currentDir === 'asc') ? 1 : -1;
+        
+        items.sort((a, b) => {
+            let textA = a.innerText; 
+            let textB = b.innerText;
+            // Parse format: "1 | Checking | Active | $1500.00"
+            let partsA = textA.split('|');
+            let partsB = textB.split('|');
+            
+            if(type === 'id') {
+                // Sort by Account ID (Index 0)
+                return (parseInt(partsA[0]) - parseInt(partsB[0])) * multiplier;
+            } else if(type === 'bal') {
+                // Sort by Balance (Index 3)
+                let balA = parseFloat(partsA[3].replace('$','').replace(',','').trim());
+                let balB = parseFloat(partsB[3].replace('$','').replace(',','').trim());
+                return (balA - balB) * multiplier; 
+            }
+        });
+        
+        // Flip direction for next click
+        sortDir[type] = (currentDir === 'asc') ? 'desc' : 'asc';
+        
+        // Re-append items in new order
+        items.forEach(item => list.appendChild(item));
+    }
+</script>
 <jsp:include page="footer.jsp"/>

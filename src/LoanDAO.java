@@ -68,4 +68,17 @@ public class LoanDAO {
         }
         return false;
     }
+
+    // --- DELETE Operation (This was missing!) ---
+    public boolean deleteLoan(int loanId) {
+        String sql = "DELETE FROM LOAN WHERE loan_id = ?";
+        try (Connection conn = DBConnector.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, loanId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

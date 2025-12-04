@@ -1,4 +1,4 @@
-import java.io.IOException; import jakarta.servlet.ServletException; import jakarta.servlet.http.HttpServlet; import jakarta.servlet.http.HttpServletRequest; import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException; import java.util.ArrayList; import java.util.List; import jakarta.servlet.ServletException; import jakarta.servlet.http.HttpServlet; import jakarta.servlet.http.HttpServletRequest; import jakarta.servlet.http.HttpServletResponse;
 
 public class BankControllerServlet extends HttpServlet {
 
@@ -35,55 +35,116 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
     try {
         switch (action) {
             
+            // --- VIEW ACCOUNTS ---
             case "viewAccounts":
                 request.setAttribute("pageTitle", "View All Accounts");
                 request.setAttribute("accountsList", accountDAO.getAllAccounts());
                 request.getRequestDispatcher("/viewAccounts.jsp").forward(request, response);
                 break;
 
+            // --- SEARCH ACCOUNT (SMARTER LOGIC) ---
+            case "searchAccount":
+                String query = request.getParameter("searchQuery");
+                request.setAttribute("pageTitle", "Search Results");
+                
+                List<String> allAccounts = accountDAO.getAllAccounts();
+                List<String> filteredList = new ArrayList<>();
+                
+                if (query != null && !query.trim().isEmpty()) {
+                    String q = query.trim();
+                    boolean isNumeric = q.matches("\\d+"); // Check if query is just numbers
+                    
+                    for (String acc : allAccounts) {
+                        // Format: ID | Type | Status | $Balance
+                        // We need to split to search specific columns
+                        String[] parts = acc.split("\\|"); 
+                        if (parts.length >= 2) {
+                            String id = parts[0].trim();
+                            String type = parts[1].trim();
+                            
+                            if (isNumeric) {
+                                // Exact match for ID (Fixes the "1 matches 10 and 1500" issue)
+                                if (id.equals(q)) {
+                                    filteredList.add(acc);
+                                }
+                            } else {
+                                // Case-insensitive partial match for Type
+                                if (type.toLowerCase().contains(q.toLowerCase())) {
+                                    filteredList.add(acc);
+                                }
+                            }
+                        }
+                    }
+                    request.setAttribute("message", "Found " + filteredList.size() + " result(s) for '" + query + "'");
+                } else {
+                    filteredList = allAccounts; 
+                }
+                
+                request.setAttribute("accountsList", filteredList);
+                request.getRequestDispatcher("/viewAccounts.jsp").forward(request, response);
+                break;
+
+            // --- DEACTIVATE ACCOUNT ---
+            case "deleteAccount": 
+                int delAccId = Integer.parseInt(request.getParameter("accountId"));
+                boolean accDeactivated = accountDAO.deactivateAccount(delAccId);
+                
+                request.setAttribute("pageTitle", "View All Accounts");
+                request.setAttribute("accountsList", accountDAO.getAllAccounts());
+                
+                if(accDeactivated) {
+                    request.setAttribute("message", "✅ Account #" + delAccId + " has been set to Inactive.");
+                } else {
+                    request.setAttribute("message", "❌ Failed to deactivate Account #" + delAccId);
+                }
+                request.getRequestDispatcher("/viewAccounts.jsp").forward(request, response);
+                break;
+
+            // --- ADD CUSTOMER ---
             case "addCustomerForm":
                 request.setAttribute("pageTitle", "Register New Customer");
                 request.getRequestDispatcher("/customerForm.jsp").forward(request, response);
                 break;
 
             case "addCustomer":
-                    String firstName = request.getParameter("firstName");
-                    String lastName = request.getParameter("lastName");
-                    String email = request.getParameter("email");
-                    String phone = request.getParameter("phone");
-                    String dob = request.getParameter("dob");
-                    String address = request.getParameter("address");
-                    
-                    // 1. Capture Financials
-                    String initBalStr = request.getParameter("initialBalance");
-                    String incomeStr = request.getParameter("income");
-                    String creditStr = request.getParameter("creditScore");
+                String firstName = request.getParameter("firstName");
+                String lastName = request.getParameter("lastName");
+                String email = request.getParameter("email");
+                String phone = request.getParameter("phone");
+                String dob = request.getParameter("dob");
+                String address = request.getParameter("address");
+                
+                String initBalStr = request.getParameter("initialBalance");
+                String incomeStr = request.getParameter("income");
+                String creditStr = request.getParameter("creditScore");
+                // NEW: Capture Account Type
+                String accType = request.getParameter("accountType");
+                if(accType == null || accType.isEmpty()) accType = "Checking"; 
 
-                    double initialBal = (initBalStr != null && !initBalStr.isEmpty()) ? Double.parseDouble(initBalStr) : 0.0;
-                    double income = (incomeStr != null && !incomeStr.isEmpty()) ? Double.parseDouble(incomeStr) : 0.0;
-                    int creditScore = (creditStr != null && !creditStr.isEmpty()) ? Integer.parseInt(creditStr) : 0;
+                double initialBal = (initBalStr != null && !initBalStr.isEmpty()) ? Double.parseDouble(initBalStr) : 0.0;
+                double income = (incomeStr != null && !incomeStr.isEmpty()) ? Double.parseDouble(incomeStr) : 0.0;
+                int creditScore = (creditStr != null && !creditStr.isEmpty()) ? Integer.parseInt(creditStr) : 0;
 
-                    // 2. Create Customer (Now passes income and creditScore)
-                    boolean customerAdded = customerDAO.addCustomer(firstName, lastName, email, phone, dob, address, income, creditScore);
-                    
-                    String message = "";
-                    if (customerAdded) {
-                        // 3. Auto-Create Account
-                        int newCustId = customerDAO.getLatestCustomerId();
-                        if (newCustId != -1) {
-                            String today = java.time.LocalDate.now().toString();
-                            accountDAO.addAccount(newCustId, "Checking", initialBal, today);
-                            message = "✅ Customer registered (Credit Score: " + creditScore + ") and Checking Account created.";
-                        }
-                    } else {
-                        message = "❌ Customer Add Failed.";
+                boolean customerAdded = customerDAO.addCustomer(firstName, lastName, email, phone, dob, address, income, creditScore);
+                
+                String message = "";
+                if (customerAdded) {
+                    int newCustId = customerDAO.getLatestCustomerId();
+                    if (newCustId != -1) {
+                        String today = java.time.LocalDate.now().toString();
+                        accountDAO.addAccount(newCustId, accType, initialBal, today);
+                        message = "✅ Customer registered and " + accType + " Account created with $" + initialBal;
                     }
-                    
-                    request.setAttribute("pageTitle", "Transaction Result");
-                    request.setAttribute("message", message);
-                    request.getRequestDispatcher("/result.jsp").forward(request, response);
-                    break;
+                } else {
+                    message = "❌ Customer Add Failed (Email might be duplicate).";
+                }
+                
+                request.setAttribute("pageTitle", "Transaction Result");
+                request.setAttribute("message", message);
+                request.getRequestDispatcher("/result.jsp").forward(request, response);
+                break;
 
+            // --- TRANSFERS ---
             case "loadTransferForm":
                 request.setAttribute("pageTitle", "Fund Transfer");
                 request.setAttribute("accountsList", accountDAO.getAllAccounts()); 
@@ -98,19 +159,20 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
                 boolean success = txService.transferFunds(sourceId, destId, amount);
 
                 if (success) {
-                    // Set success flag to trigger modal in JSP
                     request.setAttribute("transferSuccess", true);
                     request.setAttribute("pageTitle", "Fund Transfer");
-                    // Refresh the list for the sidebar
                     request.setAttribute("accountsList", accountDAO.getAllAccounts()); 
                     request.getRequestDispatcher("/transferForm.jsp").forward(request, response);
                 } else {
-                    request.setAttribute("pageTitle", "Transaction Failed");
-                    request.setAttribute("message", "❌ TRANSFER FAILED! Funds rolled back.");
-                    request.getRequestDispatcher("/result.jsp").forward(request, response);
+                    // FAILURE CASE FIX: Stay on transfer page
+                    request.setAttribute("pageTitle", "Fund Transfer");
+                    request.setAttribute("accountsList", accountDAO.getAllAccounts()); 
+                    request.setAttribute("errorMessage", "❌ TRANSFER FAILED! Check IDs, Balance, or Status.");
+                    request.getRequestDispatcher("/transferForm.jsp").forward(request, response);
                 }
                 break;
                 
+            // --- LOANS ---
             case "loanForm":
                 request.setAttribute("pageTitle", "Loan Status Management");
                 request.setAttribute("loansList", loanDAO.getAllLoans());
@@ -123,7 +185,6 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
                 
                 boolean loanUpdated = loanDAO.updateLoanStatus(loanId, newStatus);
                 
-                // If updated, reload the loan form to see changes immediately
                 if (loanUpdated) {
                     request.setAttribute("pageTitle", "Loan Status Management");
                     request.setAttribute("loansList", loanDAO.getAllLoans());
@@ -133,6 +194,16 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
                     request.setAttribute("message", "Loan Status Update Failed.");
                     request.getRequestDispatcher("/result.jsp").forward(request, response);
                 }
+                break;
+
+            case "deleteLoan":
+                int delLoanId = Integer.parseInt(request.getParameter("loanId"));
+                boolean loanDeleted = loanDAO.deleteLoan(delLoanId);
+                
+                request.setAttribute("pageTitle", "Loan Status Management");
+                request.setAttribute("loansList", loanDAO.getAllLoans());
+                if(loanDeleted) request.setAttribute("message", "✅ Loan #" + delLoanId + " deleted.");
+                request.getRequestDispatcher("/loanForm.jsp").forward(request, response);
                 break;
                 
             default:

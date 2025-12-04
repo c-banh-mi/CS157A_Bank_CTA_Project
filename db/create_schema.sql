@@ -20,10 +20,12 @@ CREATE TABLE CUSTOMER (
 -- ACCOUNT Table (Child of CUSTOMER)
 CREATE TABLE ACCOUNT (
     account_id INT PRIMARY KEY AUTO_INCREMENT,
-    customer_id INT NOT NULL, -- Foreign Key to link to the owner
+    customer_id INT NOT NULL,
     account_type ENUM('Checking', 'Savings') NOT NULL,
     balance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     open_date DATE NOT NULL,
+    -- NEW: Status column (Active by default)
+    status ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
     FOREIGN KEY (customer_id) REFERENCES CUSTOMER(customer_id)
 );
 

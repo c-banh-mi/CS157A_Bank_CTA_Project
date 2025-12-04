@@ -41,17 +41,24 @@
                 </div>
 
                 <div class="col-12"><hr></div>
-                <h5 class="text-primary">Financial Profile</h5>
+                <h5 class="text-primary">Financial Profile & Initial Account</h5>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label">Account Type</label>
+                    <select class="form-select" name="accountType">
+                        <option value="Checking">Checking</option>
+                        <option value="Savings">Savings</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">Initial Deposit ($)</label>
                     <input type="number" class="form-control" name="initialBalance" min="0" step="0.01" value="0.00">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Annual Income ($)</label>
                     <input type="number" class="form-control" name="income" min="0">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Credit Score</label>
                     <input type="number" class="form-control" name="creditScore" min="300" max="850">
                 </div>
