@@ -21,7 +21,7 @@ import java.sql.Statement;
  * List<Map<String,Object>> rows = DBConnector.executeQuery("SELECT * FROM accounts WHERE id = ?", 1);
  */
 public final class DBConnector {
-    private static final String URL = "jdbc:mysql://localhost:3306/BankCTA_DB?serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/?serverTimezone=UTC";
     private static final String USER = "root";
     private static final String PASSWORD = "wu9r*6rEDAJ8";
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
@@ -165,7 +165,7 @@ public final class DBConnector {
             System.out.println("Database created or already exists.");
 
             // Optional: switch to the 'bank' database
-            stmt.execute("USE bank");
+            stmt.execute("USE BankCTA_DB");
 
             // Execute SQL files
             executeSQLFile("db/create_schema.sql");       // Create tables
