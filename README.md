@@ -56,6 +56,7 @@ Ensure you have the following installed:
 ```bash
 git clone https://github.com/c-banh-mi/CS157A_Bank_CTA_Project.git
 cd CS157A_Bank_CTA_Project
+```
 
 2. Database Setup
 * Open MySQL Workbench and ensure your local server is running on port 3306.
@@ -64,18 +65,21 @@ cd CS157A_Bank_CTA_Project
 ```Java
 private static final String USER = "root";
 private static final String PASSWORD = "YOUR_PASSWORD";
+```
 * Run the setup utility:
 ```bash
 # Compile and run the connector
 javac -cp "lib/*;src;." src/DBConnector.java
 java -cp "lib/*;src;." DBConnector
 # This will create the BankCTA_DB database and populate it with sample data
+```
 
 3. Compile the Application
 * You need to compile the source code using the Tomcat libraries. Update the path to your local Tomcat installation.
 ```bash
 del src\*.class
 javac -cp "lib/*;C:\Tomcat\apache-tomcat-11.0.14\lib\*;webapp/WEB-INF/lib/*;." src/*.java
+```
 
 4. Build the WAR file
 * Package the application for deployment
@@ -98,6 +102,7 @@ copy lib\jakarta.servlet.jsp.jstl-api-3.1.0-M1.jar build\WEB-INF\lib\
 
 # create WAR
 jar -cvf bankcta.war -C build/ .
+```
 
 5. Deploy & Run
 * Delete any old instance of bankcta.war and bankcta folder in the webapps folder
@@ -107,21 +112,44 @@ jar -cvf bankcta.war -C build/ .
 * Start Tomcat via (bin/startup.bat)
 * Access the application at: http://localhost:8080/bankcta/
 
-Project Structure
+6. Pushing Repo
+* Before pushing to GitHub, make sure to have a .gitignore file in the root
+```
+# Ignore compiled classes
+*.class
+
+# Ignore packaged files
+*.war
+*.jar
+
+# EXCEPTION: Keep the JARs in the lib folder (Critical for your setup!)
+!lib/*.jar
+!webapp/WEB-INF/lib/*.jar
+
+# Ignore build directory
+build/
+
+# Ignore IDE settings
+.vscode/
+.idea/
+*.log
+```
+
+```Project Structure
 CS157A_Bank_CTA_Project/
 ├── src/                    # Java Source Code (Servlets, DAOs, Services)
 ├── webapp/                 # Frontend (JSP, CSS, web.xml)
 ├── db/                     # SQL Scripts (Schema, Data)
 ├── lib/                    # Project Dependencies (MySQL Connector, JSTL)
 └── README.md               # Project Documentation
+```
 
 Note
 * Passwords: Be careful not to put your actual database password in the README if this repo is public. "YOUR_PASSWORD" is used as a placeholder.
 * Paths are used to remind users to adjust the Tomcat path to match their own computer.
+* This README is clean and informative on how to run this code.
 
-This README is clean and informative on how to run this code.
-
-Contributors
-Charlie Banh
+Contributors:
+Charlie Banh,
+Andrew Gong,
 Thanh Trung Nguyen
-Andrew Gong
