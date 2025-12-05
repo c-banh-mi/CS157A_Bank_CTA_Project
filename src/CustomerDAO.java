@@ -22,7 +22,7 @@ public boolean addCustomer(String firstName, String lastName, String email,
         stmt.setString(4, phone);
         stmt.setString(5, dob);
         stmt.setString(6, address);
-        // Set the new financial values
+    
         stmt.setDouble(7, income);
         stmt.setInt(8, creditScore);
 
