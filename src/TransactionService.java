@@ -8,7 +8,7 @@ public class TransactionService {
     private AccountDAO accountDAO = new AccountDAO();
 
     public boolean transferFunds(int sourceId, int destId, double amount) {
-        // 1. Validation: Prevent transfer if either account is Inactive
+        // Prevent transfer if either account is Inactive
         if (!accountDAO.isAccountActive(sourceId)) {
             System.err.println("Transfer Failed: Source Account #" + sourceId + " is Inactive.");
             return false;
@@ -18,7 +18,7 @@ public class TransactionService {
             return false;
         }
 
-        // 2. Proceed with Transaction Logic (Standard Debit/Credit)
+        // Proceed with Transaction Logic wiht Standard Debit/Credit
         Connection conn = null;
         try {
             conn = DBConnector.getConnection();
