@@ -1,12 +1,21 @@
 import java.io.IOException; import java.util.ArrayList; import java.util.List; import jakarta.servlet.ServletException; import jakarta.servlet.http.HttpServlet; import jakarta.servlet.http.HttpServletRequest; import jakarta.servlet.http.HttpServletResponse;
-
+/**
+  * BankControllerServlet
+  * This Servlet acts as the main Controller in the MVC architecture.
+  * It intercepts all HTTP requests (GET and POST), determines the requested 
+  * "action" via a parameter, interacts with the Data Access Objects (DAOs), 
+  * and forwards the user to the appropriate JSP view.
+  */
 public class BankControllerServlet extends HttpServlet {
 
 private AccountDAO accountDAO;
 private CustomerDAO customerDAO;
 private TransactionService txService;
 private LoanDAO loanDAO;
-
+/**
+  * Initializes the Servlet and instantiates the necessary helper classes.
+  * This method runs once when the Servlet container loads the class.
+  */
 public void init() throws ServletException {
     accountDAO = new AccountDAO();
     customerDAO = new CustomerDAO();
@@ -14,18 +23,26 @@ public void init() throws ServletException {
     loanDAO = new LoanDAO();
 }
 
+// handles HTTP POST requests by forwarding to processRequest
 @Override
 protected void doPost(HttpServletRequest request, HttpServletResponse response) 
         throws ServletException, IOException {
     processRequest(request, response);
 }
 
+// handles HTTP GET requests by forwarding to processRequest
 @Override
 protected void doGet(HttpServletRequest request, HttpServletResponse response) 
         throws ServletException, IOException {
     processRequest(request, response);
 }
 
+/**
+  * Central processing method for all requests.
+  * Switches on the 'action' parameter to determine business logic.
+  * @param request  The HttpServletRequest object
+  * @param response The HttpServletResponse object
+  */
 protected void processRequest(HttpServletRequest request, HttpServletResponse response) 
         throws ServletException, IOException {
     
@@ -56,7 +73,7 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
                     
                     for (String acc : allAccounts) {
                         // Format: ID | Type | Status | $Balance
-                        // We need to split to search specific columns
+                        // split to search specific columns
                         String[] parts = acc.split("\\|"); 
                         if (parts.length >= 2) {
                             String id = parts[0].trim();
@@ -117,7 +134,7 @@ protected void processRequest(HttpServletRequest request, HttpServletResponse re
                 String initBalStr = request.getParameter("initialBalance");
                 String incomeStr = request.getParameter("income");
                 String creditStr = request.getParameter("creditScore");
-                // NEW: Capture Account Type
+                // capture Account Type
                 String accType = request.getParameter("accountType");
                 if(accType == null || accType.isEmpty()) accType = "Checking"; 
 
