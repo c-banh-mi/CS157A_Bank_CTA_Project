@@ -7,7 +7,7 @@ import java.util.List;
 
 public class LoanDAO {
 
-    // --- CREATE Operation ---
+    // CREATE Operation
     public boolean addLoan(int customerId, String loanType, double loanAmount, double interestRate, String status, String startDate) {
         String sql = "INSERT INTO LOAN (customer_id, loan_type, loan_amount, interest_rate, status, start_date) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnector.getConnection();
@@ -25,7 +25,7 @@ public class LoanDAO {
         return false;
     }
 
-    // --- READ Operation (With JOIN) ---
+    // READ Operation With JOIN
     public List<String> getAllLoans() {
         List<String> loans = new ArrayList<>();
         // JOIN query to get Loan info + Customer Income/Score
@@ -55,7 +55,7 @@ public class LoanDAO {
         return loans;
     }
 
-    // --- UPDATE Operation ---
+    // UPDATE Operation
     public boolean updateLoanStatus(int loanId, String newStatus) {
         String sql = "UPDATE LOAN SET status = ? WHERE loan_id = ?";
         try (Connection conn = DBConnector.getConnection();
@@ -69,7 +69,7 @@ public class LoanDAO {
         return false;
     }
 
-    // --- DELETE Operation (This was missing!) ---
+    // DELETE Operation
     public boolean deleteLoan(int loanId) {
         String sql = "DELETE FROM LOAN WHERE loan_id = ?";
         try (Connection conn = DBConnector.getConnection();
